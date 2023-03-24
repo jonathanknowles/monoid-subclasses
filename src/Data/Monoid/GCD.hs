@@ -28,6 +28,7 @@ where
 
 import qualified Prelude
 
+import Data.Maybe (isJust)
 import Data.Monoid -- (Monoid, Dual(..), Sum(..), Product(..))
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Unsafe as ByteString
@@ -62,6 +63,47 @@ import Prelude hiding (gcd)
 -- > gcd a b == commonPrefix a b == commonSuffix a b
 -- > Just a' = a </> p && Just b' = b </> p
 -- >    where p = gcd a b
+--
+-- In addition, the 'gcd' operation must satisfy the following properties:
+--
+-- __/Uniqueness/__
+--
+-- @
+-- 'all' 'isJust'
+--     [ a '</>' c
+--     , b '</>' c
+--     , c '</>' 'gcd' a b
+--     ]
+-- ==>
+--     (c '==' 'gcd' a b)
+-- @
+--
+-- __/Idempotence/__
+--
+-- @
+-- 'gcd' a a '==' a
+-- @
+--
+-- __/Identity/__
+--
+-- @
+-- 'gcd' 'mempty' a '==' 'mempty'
+-- @
+-- @
+-- 'gcd' a 'mempty' '==' 'mempty'
+-- @
+--
+-- __/Commutativity/__
+--
+-- @
+-- 'gcd' a b '==' 'gcd' b a
+-- @
+--
+-- __/Associativity/__
+--
+-- @
+-- 'gcd' ('gcd' a b) c '==' 'gcd' a ('gcd' b c)
+-- @
 --
 class (Monoid m, Commutative m, Reductive m, LeftGCDMonoid m, RightGCDMonoid m, OverlappingGCDMonoid m) => GCDMonoid m where
    gcd :: m -> m -> m
