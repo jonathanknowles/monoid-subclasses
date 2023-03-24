@@ -1,4 +1,4 @@
-{- 
+{-
     Copyright 2013-2019 Mario Blazevic
 
     License: BSD3 (see BSD3-LICENSE.txt file)
@@ -11,11 +11,11 @@
 --
 -- The 'GCDMonoid' class is for Abelian, /i.e./, 'Commutative' monoids. Since most practical monoids in Haskell are not
 -- Abelian, there are also its three symmetric superclasses:
--- 
+--
 -- * 'LeftGCDMonoid'
--- 
+--
 -- * 'RightGCDMonoid'
--- 
+--
 -- * 'OverlappingGCDMonoid'
 
 {-# LANGUAGE CPP, Haskell2010, FlexibleInstances, Trustworthy #-}
@@ -102,7 +102,7 @@ class (Monoid m, LeftReductive m) => LeftGCDMonoid m where
 
 -- | Class of monoids capable of finding the equivalent of greatest common divisor on the right side of two monoidal
 -- values. The following laws must be respected:
--- 
+--
 -- > stripCommonSuffix a b == (a', b', s)
 -- >    where s = commonSuffix a b
 -- >          Just a' = stripSuffix p a
