@@ -27,6 +27,7 @@ Library
                      Data.Monoid.Cancellative
                    , Data.Monoid.Factorial
                    , Data.Monoid.GCD
+                   , Data.Monoid.GCD.Distributive
                    , Data.Monoid.Instances.ByteString.UTF8
                    , Data.Monoid.Instances.CharVector
                    , Data.Monoid.Instances.Concat
