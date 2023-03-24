@@ -35,6 +35,7 @@ Library
                    , Data.Monoid.Instances.Positioned
                    , Data.Monoid.Instances.Stateful
                    , Data.Monoid.LCM
+                   , Data.Monoid.LCM.Distributive
                    , Data.Monoid.Monus
                    , Data.Monoid.Null
                    , Data.Monoid.Textual
