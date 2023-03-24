@@ -126,6 +126,39 @@ class (Monoid m, Commutative m, Reductive m, LeftGCDMonoid m, RightGCDMonoid m, 
 -- and it cannot itself be a suffix of any other common prefix @y@ of both values:
 --
 -- > not (y `isPrefixOf` a && y `isPrefixOf` b && commonPrefix a b `isSuffixOf` y)
+--
+-- In addition, the 'commonPrefix' operation must satisfy the following
+-- properties:
+--
+-- __/Idempotence/__
+--
+-- @
+-- 'commonPrefix' a a '==' a
+-- @
+--
+-- __/Identity/__
+--
+-- @
+-- 'commonPrefix' 'mempty' a '==' 'mempty'
+-- @
+-- @
+-- 'commonPrefix' a 'mempty' '==' 'mempty'
+-- @
+--
+-- __/Commutativity/__
+--
+-- @
+-- 'commonPrefix' a b '==' 'commonPrefix' b a
+-- @
+--
+-- __/Associativity/__
+--
+-- @
+-- 'commonPrefix' ('commonPrefix' a b) c
+-- '=='
+-- 'commonPrefix' a ('commonPrefix' b c)
+-- @
+--
 class (Monoid m, LeftReductive m) => LeftGCDMonoid m where
    commonPrefix :: m -> m -> m
    stripCommonPrefix :: m -> m -> (m, m, m)
