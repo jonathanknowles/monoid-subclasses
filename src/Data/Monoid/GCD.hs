@@ -145,6 +145,9 @@ import Prelude hiding (gcd)
 class (Monoid m, Commutative m, Reductive m, LeftGCDMonoid m, RightGCDMonoid m, OverlappingGCDMonoid m) => GCDMonoid m where
    gcd :: m -> m -> m
 
+   disjoint :: m -> m -> Bool
+   disjoint m1 m2 = isJust $ mempty </> gcd m1 m2
+
 -- | Class of monoids capable of finding the equivalent of greatest common divisor on the left side of two monoidal
 -- values. The following laws must be respected:
 --
