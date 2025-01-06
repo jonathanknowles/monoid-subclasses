@@ -1,4 +1,4 @@
-{- 
+{-
     Copyright 2013-2019 Mario Blazevic
 
     License: BSD3 (see BSD3-LICENSE.txt file)
@@ -14,7 +14,7 @@ module Data.Monoid.Monus (
    Monus(..), OverlappingGCDMonoid(..)
    )
 where
-   
+
 import Data.Monoid -- (Monoid, Dual(..), Sum(..), Product(..))
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Lazy as LazyByteString
@@ -64,6 +64,8 @@ import Prelude hiding (null)
 -- @since 1.0
 class (Commutative m, Monoid m, OverlappingGCDMonoid m) => Monus m where
    (<\>) :: m -> m -> m
+   symmetricDifference :: m -> m -> m
+   symmetricDifference m1 m2 = (m1 <\> m2) <> (m2 <\> m1)
 
 infix 5 <\>
 
@@ -125,6 +127,7 @@ class (Monoid m, LeftReductive m, RightReductive m) => OverlappingGCDMonoid m wh
 -- | /O(1)/
 instance Monus () where
    () <\> () = ()
+   symmetricDifference () () = ()
 
 -- | /O(1)/
 instance OverlappingGCDMonoid () where
@@ -137,6 +140,7 @@ instance OverlappingGCDMonoid () where
 
 instance Monus a => Monus (Dual a) where
    Dual a <\> Dual b = Dual (a <\> b)
+   symmetricDifference (Dual a) (Dual b) = Dual (symmetricDifference a b)
 
 instance OverlappingGCDMonoid a => OverlappingGCDMonoid (Dual a) where
    overlap (Dual a) (Dual b) = Dual (overlap b a)
@@ -152,6 +156,9 @@ instance Monus (Sum Natural) where
    Sum a <\> Sum b
       | a > b = Sum (a - b)
       | otherwise = Sum 0
+   symmetricDifference (Sum a) (Sum b)
+      | a > b = Sum (a - b)
+      | otherwise = Sum (b - a)
 
 -- | /O(1)/
 instance OverlappingGCDMonoid (Sum Natural) where
@@ -167,6 +174,8 @@ instance OverlappingGCDMonoid (Sum Natural) where
 instance Monus (Product Natural) where
    Product 0 <\> Product 0 = Product 1
    Product a <\> Product b = Product (a `div` Prelude.gcd a b)
+   symmetricDifference (Product a) (Product b) =
+       Product (Prelude.lcm a b `div` Prelude.gcd a b)
 
 -- | /O(1)/
 instance OverlappingGCDMonoid (Product Natural) where
@@ -181,6 +190,8 @@ instance OverlappingGCDMonoid (Product Natural) where
 
 instance (Monus a, Monus b) => Monus (a, b) where
    (a1, b1) <\> (a2, b2) = (a1 <\> a2, b1 <\> b2)
+   symmetricDifference (a1, b1) (a2, b2) =
+      (symmetricDifference a1 a2, symmetricDifference b1 b2)
 
 instance (OverlappingGCDMonoid a, OverlappingGCDMonoid b) => OverlappingGCDMonoid (a, b) where
    overlap (a1, b1) (a2, b2) = (overlap a1 a2, overlap b1 b2)
@@ -194,6 +205,11 @@ instance (OverlappingGCDMonoid a, OverlappingGCDMonoid b) => OverlappingGCDMonoi
 
 instance (Monus a, Monus b, Monus c) => Monus (a, b, c) where
    (a1, b1, c1) <\> (a2, b2, c2) = (a1 <\> a2, b1 <\> b2, c1 <\> c2)
+   symmetricDifference (a1, b1, c1) (a2, b2, c2) =
+      ( symmetricDifference a1 a2
+      , symmetricDifference b1 b2
+      , symmetricDifference c1 c2
+      )
 
 instance (OverlappingGCDMonoid a, OverlappingGCDMonoid b, OverlappingGCDMonoid c) =>
          OverlappingGCDMonoid (a, b, c) where
@@ -209,6 +225,12 @@ instance (OverlappingGCDMonoid a, OverlappingGCDMonoid b, OverlappingGCDMonoid c
 
 instance (Monus a, Monus b, Monus c, Monus d) => Monus (a, b, c, d) where
    (a1, b1, c1, d1) <\> (a2, b2, c2, d2) = (a1 <\> a2, b1 <\> b2, c1 <\> c2, d1 <\> d2)
+   symmetricDifference (a1, b1, c1, d1) (a2, b2, c2, d2) =
+      ( symmetricDifference a1 a2
+      , symmetricDifference b1 b2
+      , symmetricDifference c1 c2
+      , symmetricDifference d1 d2
+      )
 
 instance (OverlappingGCDMonoid a, OverlappingGCDMonoid b, OverlappingGCDMonoid c, OverlappingGCDMonoid d) =>
          OverlappingGCDMonoid (a, b, c, d) where
@@ -234,6 +256,12 @@ instance (Monus a, MonoidNull a) => Monus (Maybe a) where
    Nothing <\> _ = Nothing
    x <\> Nothing = x
 
+   symmetricDifference ma1 ma2 = case (ma1, ma2) of
+      (Nothing, Nothing) -> Nothing
+      (Just a1, Nothing) -> Just a1
+      (Nothing, Just a2) -> Just a2
+      (Just a1, Just a2) -> Just (symmetricDifference a1 a2)
+
 instance (OverlappingGCDMonoid a, MonoidNull a) => OverlappingGCDMonoid (Maybe a) where
    overlap (Just a) (Just b) = Just (overlap a b)
    overlap _ _ = Nothing
@@ -258,6 +286,9 @@ instance (OverlappingGCDMonoid a, MonoidNull a) => OverlappingGCDMonoid (Maybe a
 -- | /O(m*log(n/m + 1)), m <= n/
 instance Ord a => Monus (Set.Set a) where
    (<\>) = (Set.\\)
+   -- Once `Set` includes a `symmetricDifference` difference operation,
+   -- we can provide a more efficient implementation here.
+   symmetricDifference s1 s2 = (s1 Set.\\ s2) <> (s2 Set.\\ s1)
 
 -- | /O(m*log(n/m + 1)), m <= n/
 instance Ord a => OverlappingGCDMonoid (Set.Set a) where
@@ -271,6 +302,9 @@ instance Ord a => OverlappingGCDMonoid (Set.Set a) where
 -- | /O(m+n)/
 instance Monus IntSet.IntSet where
    (<\>) = (IntSet.\\)
+   -- Once `IntSet` includes a `symmetricDifference` difference operation,
+   -- we can provide a more efficient implementation here.
+   symmetricDifference s1 s2 = (s1 IntSet.\\ s2) <> (s2 IntSet.\\ s1)
 
 -- | /O(m+n)/
 instance OverlappingGCDMonoid IntSet.IntSet where
