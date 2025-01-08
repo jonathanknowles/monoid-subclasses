@@ -11,7 +11,9 @@
 {-# LANGUAGE Haskell2010, FlexibleInstances, Trustworthy #-}
 
 module Data.Monoid.Monus (
-   Monus(..), OverlappingGCDMonoid(..)
+   Monus(..), OverlappingGCDMonoid(..),
+   symmetricDifferenceSetDefault,
+   symmetricDifferenceSetMerge
    )
 where
 
@@ -22,7 +24,7 @@ import qualified Data.Text as Text
 import qualified Data.Text.Lazy as LazyText
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
-import qualified Data.Map.Lazy as Map
+import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Sequence
 import qualified Data.Set as Set
 import Data.Sequence (ViewL((:<)), (|>))
@@ -33,7 +35,7 @@ import Data.Semigroup.Cancellative
 import Data.Monoid.Null (MonoidNull(null))
 
 import Prelude hiding (null)
-import qualified Data.Map.Merge.Lazy as Map
+import qualified Data.Map.Merge.Strict as Map
 
 import qualified Data.Map.Strict as M
 import Data.Map.Merge.Strict
@@ -293,29 +295,26 @@ instance Ord a => Monus (Set.Set a) where
    (<\>) = (Set.\\)
    -- Once `Set` includes a `symmetricDifference` difference operation,
    -- we can provide a more efficient implementation here.
-   symmetricDifference s1 s2
-        = Map.keysSet
-        $ Map.merge
-            (Map.preserveMissing)
-            (Map.preserveMissing)
-            (Map.zipWithMaybeMatched $ \_ _ _ -> Nothing)
-            (Map.fromSet (const ()) s1)
-            (Map.fromSet (const ()) s2)
+   symmetricDifference = symmetricDifferenceSetDefault -- SetDefault
 
-partitionKeys :: Ord k => (k -> Bool) -> Map.Map k a -> (Map.Map k a, Map.Map k a)
-partitionKeys p m =
-  let -- Use mergeA with a writer-like applicative to collect the "right map"
-      (leftMap, Dual (Endo rightBuilder)) =
-        Map.mergeA
-          (traverseMaybeMissing (\k v ->
-             if p k
-               then pure (Just v) -- Include in the "left map"
-               else pure Nothing *> Dual (Endo (Map.insert k v)))) -- Collect in the "right map"
-          dropMissing
-          (const $ pure Nothing) -- No overlapping keys to handle
-          m
-          mempty
-   in (leftMap, rightBuilder M.empty) -- Apply the builder to construct the "right map"
+symmetricDifferenceSetDefault :: Ord k => Set.Set k -> Set.Set k -> Set.Set k
+symmetricDifferenceSetDefault s1 s2 =
+    (s1 `Set.difference` s2) <> (s2 `Set.difference` s1)
+
+symmetricDifferenceSetUnionIntersection
+    :: Ord k => Set.Set k -> Set.Set k -> Set.Set k
+symmetricDifferenceSetUnionIntersection s1 s2 =
+    (s1 `Set.union` s2) <\> (s1 `Set.intersection` s2)
+
+symmetricDifferenceSetMerge :: Ord k => Set.Set k -> Set.Set k -> Set.Set k
+symmetricDifferenceSetMerge s1 s2
+    = Map.keysSet
+    $ Map.merge
+        (Map.preserveMissing)
+        (Map.preserveMissing)
+        (Map.zipWithMaybeMatched $ \_ _ _ -> Nothing)
+        (Map.fromSet (const ()) s1)
+        (Map.fromSet (const ()) s2)
 
 -- | /O(m*log(n/m + 1)), m <= n/
 instance Ord a => OverlappingGCDMonoid (Set.Set a) where
