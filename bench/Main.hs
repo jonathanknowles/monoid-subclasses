@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Main where
 
@@ -13,34 +14,42 @@ import Test.Tasty.Bench
 
 import qualified Data.Set as Set
 import Data.Monoid.Monus (Monus(symmetricDifference))
-import Prelude
-import Data.Monoid.Monus (symmetricDifferenceSetMerge)
-import Data.Monoid.Monus (symmetricDifferenceSetDefault)
+import Prelude hiding ((^))
+import qualified Prelude
+import Numeric.Natural (Natural)
+import Data.Set (Set)
+import Data.Semigroup (Product(Product))
 
 main :: IO ()
 main = do
 
     evaluate $ rnf [setA, setB]
-
-    putStrLn $
-        show $
-        symmetricDifferenceSetMerge   setA setB ==
-        symmetricDifferenceSetDefault setA setB
+    evaluate $ rnf [natA, natB]
 
     defaultMain
         [ bgroup "Monus"
             [ bgroup "symmetricDifference"
                 [ bench "Set" $
                     nf (symmetricDifference setA) setB
+                , bench "Product Natural" $
+                    nf (symmetricDifference (Product natA)) (Product natB)
                 ]
             ]
         ]
   where
-    bound :: Int
-    bound = 2 ^ (16 :: Int)
+    setA :: Set Natural
+    setA = Set.fromList $ filter (\n -> (n `mod` 3) /= 0) $ [1 .. 2 ^ 16]
 
-    naturals :: [Int]
-    naturals = [1 .. bound]
+    setB :: Set Natural
+    setB = Set.fromList $ filter (\n -> (n `mod` 3) /= 1) $ [1 .. 2 ^ 16]
 
-    setA = Set.fromList $ filter (\n -> (n `mod` 3) /= 0) naturals
-    setB = Set.fromList $ filter (\n -> (n `mod` 3) /= 1) naturals
+    natA :: Natural
+    natA = (2 ^ 32768) - 1
+
+    natB :: Natural
+    natB = (2 ^ 65536) - 1
+
+(^) :: Integral i => i -> i -> i
+(^) = (Prelude.^)
+
+

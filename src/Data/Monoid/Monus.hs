@@ -9,6 +9,7 @@
 -- @since 1.0
 
 {-# LANGUAGE Haskell2010, FlexibleInstances, Trustworthy #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Data.Monoid.Monus (
    Monus(..), OverlappingGCDMonoid(..),
@@ -181,8 +182,39 @@ instance OverlappingGCDMonoid (Sum Natural) where
 instance Monus (Product Natural) where
    Product 0 <\> Product 0 = Product 1
    Product a <\> Product b = Product (a `div` Prelude.gcd a b)
-   symmetricDifference (Product a) (Product b) =
-       Product (Prelude.lcm a b `div` Prelude.gcd a b)
+   symmetricDifference = symmetricDifferenceProductNatural2
+
+symmetricDifferenceProductNatural0
+    :: Product Natural
+    -> Product Natural
+    -> Product Natural
+symmetricDifferenceProductNatural0
+    (Product a) (Product b) = Product $
+        Prelude.lcm a b `div` Prelude.gcd a b
+  where
+    c :: Natural
+    c = Prelude.gcd a b
+
+symmetricDifferenceProductNatural1
+    :: Product Natural
+    -> Product Natural
+    -> Product Natural
+symmetricDifferenceProductNatural1
+    (Product a) (Product b) = Product $
+        (a * b) `div` (c ^ (2 :: Int) :: Natural)
+  where
+    c :: Natural
+    c = Prelude.gcd a b
+
+symmetricDifferenceProductNatural2
+    :: Product Natural
+    -> Product Natural
+    -> Product Natural
+symmetricDifferenceProductNatural2
+    (Product a) (Product b) = Product $
+        (a `div` c) * (b `div` c)
+  where
+    c = Prelude.gcd a b
 
 -- | /O(1)/
 instance OverlappingGCDMonoid (Product Natural) where
