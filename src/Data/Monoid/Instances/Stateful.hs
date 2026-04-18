@@ -214,7 +214,8 @@ instance (LeftGCDMonoid a, FactorialMonoid a, TextualMonoid b) => TextualMonoid 
    split p (Stateful (t, x)) = restore id ts
       where ts = Textual.split p t
             restore f [t1] = f [Stateful (t1, x)]
-            restore f ~(hd:tl) = restore (f . (Stateful (hd, mempty):)) tl
+            restore f (hd:tl) = restore (f . (Stateful (hd, mempty):)) tl
+            restore _ [] = error "split: impossible"
    find p = find p . extract
    elem c = elem c . extract
 

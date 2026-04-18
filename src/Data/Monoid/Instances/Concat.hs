@@ -196,11 +196,12 @@ instance (FactorialMonoid a, PositiveMonoid a) => FactorialMonoid (Concat a) whe
                     in if null xs then (x :<> yp, ys, s2) else (xp, xs :<> y, s1)
 
    split p = Foldable.foldr splitNext [mempty]
-      where splitNext a ~(xp:xs) =
+      where splitNext a (xp:xs) =
                let as = Leaf <$> Factorial.split (p . Leaf) a
                in if null xp
                   then as ++ xs
                   else init as ++ (last as <> xp):xs
+            splitNext _ [] = error "splitNext: impossible"
    splitAt 0 c = (mempty, c)
    splitAt n (Leaf x) = map2 Leaf (Factorial.splitAt n x)
    splitAt n (x :<> y)
@@ -279,11 +280,12 @@ instance (Eq a, TextualMonoid a, StableFactorial a, PositiveMonoid a) => Textual
                     in if null xs then (x :<> yp, ys, s2) else (xp, xs :<> y, s1)
 
    split p = Foldable.foldr splitNext [mempty]
-      where splitNext a ~(xp:xs) =
+      where splitNext a (xp:xs) =
                let as = Leaf <$> Textual.split p a
                in if null xp
                   then as ++ xs
                   else init as ++ (last as <> xp):xs
+            splitNext _ [] = error "splitNext: impossible"
    find p x = getFirst $ Foldable.foldMap (First . find p) x
    elem i = Foldable.any (Textual.elem i)
 
