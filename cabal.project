@@ -1,0 +1,11 @@
+packages: .
+
+tests: True
+
+package monoid-subclasses
+  ghc-options:
+    -Werror=missing-methods
+    -Werror=missing-fields
+    -Werror=unused-packages
+    -Werror=incomplete-patterns
+    -Werror=incomplete-uni-patterns

@@ -94,7 +94,7 @@ import Data.Semigroup.Cancellative
 import Data.Monoid.Monus
 
 -- These imports are marked as redundant, but are actually required by haddock:
-import Data.Maybe (isJust)
+import Data.Maybe (fromMaybe, isJust)
 
 import Prelude hiding (gcd)
 
@@ -208,8 +208,10 @@ class (Monoid m, LeftReductive m) => LeftGCDMonoid m where
       where (p, _, _) = stripCommonPrefix x y
    stripCommonPrefix x y = (p, x', y')
       where p = commonPrefix x y
-            Just x' = stripPrefix p x
-            Just y' = stripPrefix p y
+            x' = stripPrefix' x
+            y' = stripPrefix' y
+            stripPrefix' =
+              fromMaybe (error "stripCommonPrefix: impossible") . stripPrefix p
    {-# MINIMAL commonPrefix | stripCommonPrefix #-}
 
 -- | Class of monoids capable of finding the equivalent of greatest common divisor on the right side of two monoidal
@@ -271,8 +273,10 @@ class (Monoid m, RightReductive m) => RightGCDMonoid m where
       where (_, _, s) = stripCommonSuffix x y
    stripCommonSuffix x y = (x', y', s)
       where s = commonSuffix x y
-            Just x' = stripSuffix s x
-            Just y' = stripSuffix s y
+            x' = stripSuffix' x
+            y' = stripSuffix' y
+            stripSuffix' =
+              fromMaybe (error "stripCommonSuffix: impossible") . stripSuffix s
    {-# MINIMAL commonSuffix | stripCommonSuffix #-}
 
 -- Unit instances
